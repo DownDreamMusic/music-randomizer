@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Music Idea Randomizer</title>
+  <style>
+    body {
+      background-color: #1e1e1e;
+      color: #f0f0f0;
+      font-family: 'Courier New', monospace;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+    }
+    h1 {
+      color: #00ffcc;
+    }
+    .output {
+      margin: 10px 0;
+      font-size: 1.2rem;
+    }
+    button {
+      background-color: #00ffcc;
+      border: none;
+      padding: 10px 20px;
+      font-size: 1rem;
+      cursor: pointer;
+      color: #1e1e1e;
+      border-radius: 5px;
+      margin: 10px;
+    }
+    button:hover {
+      background-color: #00c4a7;
+    }
+    .toggle-section {
+      display: none;
+      flex-direction: column;
+      align-items: flex-start;
+      margin: 20px;
+      background-color: #2a2a2a;
+      padding: 20px;
+      border-radius: 10px;
+    }
+    .filter {
+      margin: 10px 0;
+    }
+    .filter label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+    }
+    .options-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-left: 10px;
+    }
+    .options-list label {
+      background-color: #333;
+      padding: 5px 10px;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    .options-list input[type="checkbox"] {
+      margin-right: 5px;
+    }
+    .add-option {
+      margin-top: 10px;
+    }
+    .add-option input {
+      margin-right: 5px;
+      padding: 3px;
+      background-color: #111;
+      color: #fff;
+      border: 1px solid #555;
+      border-radius: 5px;
+    }
+    .select-buttons {
+      margin: 5px 0;
+    }
+  </style>
+</head>
+<body>
+  <h1>🎲 Music Idea Randomizer</h1>
+
+  <div class="output" id="genre"></div>
+  <div class="output" id="bpm"></div>
+  <div class="output" id="key"></div>
+  <div class="output" id="mood"></div>
+
+  <button onclick="generate()">Randomize</button>
+  <button onclick="toggleCustomization()">Customize</button>
+
+  <div class="toggle-section" id="customization">
+    <div class="filter">
+      <label>BPM</label>
+      <div class="select-buttons">
+        <button onclick="selectAll('bpmOptions', true)">Select All</button>
+        <button onclick="selectAll('bpmOptions', false)">Deselect All</button>
+      </div>
+      <div class="options-list" id="bpmOptions"></div>
+      <div class="add-option">
+        <input type="text" id="bpmInput" placeholder="Add BPM">
+        <button onclick="addCustomOption('bpmOptions', 'bpmInput')">Add</button>
+      </div>
+    </div>
+    <div class="filter">
+      <label>Genre</label>
+      <div class="select-buttons">
+        <button onclick="selectAll('genreOptions', true)">Select All</button>
+        <button onclick="selectAll('genreOptions', false)">Deselect All</button>
+      </div>
+      <div class="options-list" id="genreOptions"></div>
+      <div class="add-option">
+        <input type="text" id="genreInput" placeholder="Add Genre">
+        <button onclick="addCustomOption('genreOptions', 'genreInput')">Add</button>
+      </div>
+    </div>
+    <div class="filter">
+      <label>Mood</label>
+      <div class="select-buttons">
+        <button onclick="selectAll('moodOptions', true)">Select All</button>
+        <button onclick="selectAll('moodOptions', false)">Deselect All</button>
+      </div>
+      <div class="options-list" id="moodOptions"></div>
+      <div class="add-option">
+        <input type="text" id="moodInput" placeholder="Add Mood">
+        <button onclick="addCustomOption('moodOptions', 'moodInput')">Add</button>
+      </div>
+    </div>
+    <div class="filter">
+      <label>Key</label>
+      <div class="select-buttons">
+        <button onclick="selectAll('keyOptions', true)">Select All</button>
+        <button onclick="selectAll('keyOptions', false)">Deselect All</button>
+      </div>
+      <div class="options-list" id="keyOptions"></div>
+      <div class="add-option">
+        <input type="text" id="keyInput" placeholder="Add Key">
+        <button onclick="addCustomOption('keyOptions', 'keyInput')">Add</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const genres = [
+      "Hip Hop", "Trap", "Boom Bap", "Lo-fi", "RnB", "Neo Soul", "House", "Techno", "Trance",
+      "Drum and Bass", "Dubstep", "Ambient", "Chillwave", "Synthwave", "Funk", "Disco",
+      "Jazz", "Rock", "Indie Rock", "Metal", "Pop", "K-Pop", "Reggaeton", "Dancehall",
+      "Reggae", "Afrobeats", "EDM", "Future Bass", "Phonk", "UK Garage", "Grime"
+    ];
+
+    const moods = [
+      "Happy", "Sad", "Melancholic", "Funky", "Chill", "Dark", "Euphoric", "Energetic",
+      "Dreamy", "Aggressive", "Romantic", "Groovy", "Uplifting", "Mysterious"
+    ];
+
+    const keys = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
+    const scales = ["Major", "Minor"];
+    const bpmValues = Array.from({length: 13}, (_, i) => (60 + i * 10).toString());
+
+    function getCheckedValues(containerId) {
+      return Array.from(document.querySelectorAll(`#${containerId} input:checked`)).map(cb => cb.value);
+    }
+
+    function generate() {
+      const bpmChoices = getCheckedValues("bpmOptions");
+      const genreChoices = getCheckedValues("genreOptions");
+      const moodChoices = getCheckedValues("moodOptions");
+      const keyChoices = getCheckedValues("keyOptions");
+
+      const bpm = bpmChoices.length ? bpmChoices[Math.floor(Math.random() * bpmChoices.length)] : "-";
+      const genre = genreChoices.length ? genreChoices[Math.floor(Math.random() * genreChoices.length)] : "-";
+      const mood = moodChoices.length ? moodChoices[Math.floor(Math.random() * moodChoices.length)] : "-";
+      const key = keyChoices.length ? keyChoices[Math.floor(Math.random() * keyChoices.length)] + " " + scales[Math.floor(Math.random() * scales.length)] : "-";
+
+      document.getElementById("genre").innerText = "🎧 Genre: " + genre;
+      document.getElementById("bpm").innerText = "🎚️ BPM: " + bpm;
+      document.getElementById("key").innerText = "🎼 Key: " + key;
+      document.getElementById("mood").innerText = "🌀 Mood: " + mood;
+    }
+
+    function toggleCustomization() {
+      const section = document.getElementById("customization");
+      section.style.display = section.style.display === "none" || section.style.display === "" ? "flex" : "none";
+    }
+
+    function populateCheckboxes(containerId, items) {
+      const container = document.getElementById(containerId);
+      items.forEach(item => {
+        const label = document.createElement("label");
+        const checkbox = document.createElement("input");
+        checkbox.type = "checkbox";
+        checkbox.value = item;
+        checkbox.checked = true;
+        label.appendChild(checkbox);
+        label.appendChild(document.createTextNode(item));
+        container.appendChild(label);
+      });
+    }
+
+    function addCustomOption(containerId, inputId) {
+      const value = document.getElementById(inputId).value.trim();
+      if (!value) return;
+      const container = document.getElementById(containerId);
+      const label = document.createElement("label");
+      const checkbox = document.createElement("input");
+      checkbox.type = "checkbox";
+      checkbox.value = value;
+      checkbox.checked = true;
+      label.appendChild(checkbox);
+      label.appendChild(document.createTextNode(value));
+      container.appendChild(label);
+      document.getElementById(inputId).value = "";
+    }
+
+    function selectAll(containerId, checked) {
+      const checkboxes = document.querySelectorAll(`#${containerId} input[type="checkbox"]`);
+      checkboxes.forEach(cb => cb.checked = checked);
+    }
+
+    window.onload = () => {
+      populateCheckboxes("genreOptions", genres);
+      populateCheckboxes("moodOptions", moods);
+      populateCheckboxes("keyOptions", keys);
+      populateCheckboxes("bpmOptions", bpmValues);
+      generate();
+    };
+  </script>
+</body>
+</html>
